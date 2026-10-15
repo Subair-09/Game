@@ -1,0 +1,6 @@
+{
+  "name": "Apex Overdrive: 3D Racing",
+  "description": "High-octane 3D racing simulator featuring dynamic car physics, drift mechanics, customizable supercars, smart AI rivals, multiple circuits, and rich procedural audio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-orbitron {
+    font-family: 'Orbitron', system-ui, sans-serif;
+  }
+  .font-chakra {
+    font-family: 'Chakra Petch', monospace, sans-serif;
+  }
+}
+
+/* Prevent unwanted mobile pull-to-refresh or tap highlights */
+* {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+canvas {
+  touch-action: none;
+}
