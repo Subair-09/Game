@@ -34,7 +34,7 @@ export const ControlDock: React.FC<ControlDockProps> = ({
   onRestartRace,
   onResetCar,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const [showHelp, setShowHelp] = useState<boolean>(false);
 
   // Toggle collapsed with 'H' key
@@ -59,30 +59,30 @@ export const ControlDock: React.FC<ControlDockProps> = ({
 
   return (
     <div
-      className={`fixed z-20 transition-all duration-300 ease-out select-none flex flex-col items-center`}
+      className={`fixed z-20 transition-all duration-300 ease-out select-none flex flex-col items-center pointer-events-auto`}
       style={{
-        bottom: '20px',
+        bottom: '12px',
         left: '50%',
         transform: `translateX(-50%) translateY(${isCollapsed ? 'calc(100% - 32px)' : '0px'})`,
-        maxWidth: 'min(940px, 94vw)',
+        maxWidth: 'min(520px, 92vw)',
         width: 'max-content',
       }}
     >
       {/* Drawer Toggle Handle (per skill specification) */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="bg-neutral-900 border border-neutral-700 hover:border-neutral-500 text-neutral-300 hover:text-white px-3.5 py-1 rounded-t-xl text-xs font-chakra flex items-center gap-1.5 shadow-md transition-colors cursor-pointer"
-        title="Toggle HUD Dock (Shortcut: H)"
+        className="bg-neutral-900 border border-neutral-700 hover:border-cyan-400 text-neutral-300 hover:text-white px-4 py-1.5 rounded-t-xl text-xs font-chakra flex items-center gap-1.5 shadow-lg transition-colors cursor-pointer"
+        title="Toggle Menu Dock (Shortcut: H)"
       >
         {isCollapsed ? (
           <>
             <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Show Controls (H)</span>
+            <span className="font-bold text-cyan-300">⚙️ Race Options & Modes</span>
           </>
         ) : (
           <>
             <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
-            <span>Hide Controls (H)</span>
+            <span>Hide Options (H)</span>
           </>
         )}
       </button>

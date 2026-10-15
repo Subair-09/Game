@@ -7,7 +7,7 @@ import { ControlDock } from './components/ControlDock';
 import { GarageModal } from './components/GarageModal';
 import { TrackSelectModal } from './components/TrackSelectModal';
 import { FinishModal } from './components/FinishModal';
-import { TouchControls } from './components/TouchControls';
+import { OnScreenControls } from './components/OnScreenControls';
 
 const DEFAULT_CAR: CarConfig = {
   id: 'phantom',
@@ -45,7 +45,8 @@ export default function App() {
 
   // Race Countdown: 3, 2, 1, 0 (GO), null (racing)
   const [countdown, setCountdown] = useState<number | null>(3);
-  const [isRaceActive, setIsRaceActive] = useState<boolean>(false);
+  const isRaceActiveRef = useRef<boolean>(true);
+  const [showOnScreenControls, setShowOnScreenControls] = useState<boolean>(true);
 
   // Live Telemetry state for React HUD
   const [physicsState, setPhysicsState] = useState<VehiclePhysicsState>({
@@ -93,7 +94,7 @@ export default function App() {
   // Countdown timer sequence
   const startCountdown = useCallback(() => {
     setCountdown(3);
-    setIsRaceActive(false);
+    isRaceActiveRef.current = false;
     setIsRaceFinished(false);
 
     soundEngine.playCountdown(false);
@@ -111,11 +112,12 @@ export default function App() {
     const step3 = setTimeout(() => {
       setCountdown(0);
       soundEngine.playCountdown(true);
-      setIsRaceActive(true);
+      isRaceActiveRef.current = true;
     }, 3000);
 
     const step4 = setTimeout(() => {
       setCountdown(null);
+      isRaceActiveRef.current = true;
     }, 4200);
 
     return () => {
@@ -160,7 +162,7 @@ export default function App() {
             !isRaceFinished
           ) {
             setIsRaceFinished(true);
-            setIsRaceActive(false);
+            isRaceActiveRef.current = false;
           }
         }
       }
@@ -186,13 +188,19 @@ export default function App() {
       if (k['a'] || k['arrowleft']) keySteer -= 1;
       if (k['d'] || k['arrowright']) keySteer += 1;
 
-      // Merge keyboard with touch input if active
+      // Merge keyboard with on-screen / touch input if active
       const finalThrottle = Math.max(keyThrottle, inputs.throttle);
       const finalBrake = Math.max(keyBrake, inputs.brake);
       const finalSteer = keySteer !== 0 ? keySteer : inputs.steer;
       const finalHandbrake = k[' '] || inputs.handbrake;
       const finalNitro = k['shift'] || k['n'] || inputs.nitro;
       const finalReset = k['r'] || inputs.reset;
+
+      // If user steps on the throttle, immediately launch the car so they are never stuck!
+      if (finalThrottle > 0 && !isRaceActiveRef.current && !isRaceFinished) {
+        isRaceActiveRef.current = true;
+        setCountdown(null);
+      }
 
       racingScene.update(
         {
@@ -203,8 +211,8 @@ export default function App() {
           nitro: finalNitro,
           reset: finalReset,
         },
-        // Race is active after countdown or in free roam
-        gameMode === 'free_roam' || !countdown
+        // Race is active in free roam or when launched
+        gameMode === 'free_roam' || isRaceActiveRef.current
       );
 
       // Auto-clear reset signal
@@ -329,15 +337,23 @@ export default function App() {
           isMuted={isMuted}
           onToggleMute={handleToggleMute}
           onResetCar={handleResetCar}
+          showOnScreenControls={showOnScreenControls}
+          onToggleOnScreenControls={() => setShowOnScreenControls((prev) => !prev)}
         />
       )}
 
-      {/* Mobile Touch Controls Overlay */}
-      <TouchControls
-        onUpdateInput={(updater) => {
-          inputsRef.current = updater(inputsRef.current);
-        }}
-      />
+      {/* On-Screen Driving Controls (Pedals & Steering) visible and clickable on all screens */}
+      {showOnScreenControls && (
+        <OnScreenControls
+          onUpdateInput={(updater) => {
+            inputsRef.current = updater(inputsRef.current);
+          }}
+          onInstantLaunch={() => {
+            isRaceActiveRef.current = true;
+            setCountdown(null);
+          }}
+        />
+      )}
 
       {/* Collapsible Unified Bottom Control Dock (Strictly meets Three.js skill layout rules) */}
       <ControlDock

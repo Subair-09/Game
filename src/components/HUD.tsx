@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { CameraView, DriftState, LapTelemetry, RaceStanding, VehiclePhysicsState } from '../types/game';
 import { BuiltTrack } from '../game/tracks';
-import { Camera, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { Camera, RotateCcw, Volume2, VolumeX, Gamepad2 } from 'lucide-react';
 
 interface HUDProps {
   physicsState: VehiclePhysicsState;
@@ -17,6 +17,8 @@ interface HUDProps {
   isMuted: boolean;
   onToggleMute: () => void;
   onResetCar: () => void;
+  showOnScreenControls: boolean;
+  onToggleOnScreenControls: () => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -33,6 +35,8 @@ export const HUD: React.FC<HUDProps> = ({
   isMuted,
   onToggleMute,
   onResetCar,
+  showOnScreenControls,
+  onToggleOnScreenControls,
 }) => {
   const minimapCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -197,6 +201,20 @@ export const HUD: React.FC<HUDProps> = ({
           {/* Quick HUD Action Buttons */}
           <div className="flex items-center gap-1.5">
             <button
+              onClick={onToggleOnScreenControls}
+              title={showOnScreenControls ? 'Hide Drive Pedals' : 'Show Drive Pedals'}
+              className={`border p-2 rounded-lg transition-colors flex items-center gap-1 text-xs font-chakra ${
+                showOnScreenControls
+                  ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-300'
+                  : 'bg-neutral-900/90 hover:bg-neutral-800 border-neutral-700/80 text-neutral-400'
+              }`}
+            >
+              <Gamepad2 className="w-4 h-4 text-emerald-400" />
+              <span className="hidden md:inline uppercase text-[11px] font-bold">
+                {showOnScreenControls ? 'PEDALS' : 'NO PEDALS'}
+              </span>
+            </button>
+            <button
               onClick={onChangeCamera}
               title={`Camera: ${cameraView.toUpperCase()}`}
               className="bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-700/80 text-neutral-300 hover:text-white p-2 rounded-lg transition-colors flex items-center gap-1 text-xs font-chakra"
@@ -276,10 +294,10 @@ export const HUD: React.FC<HUDProps> = ({
         )}
       </div>
 
-      {/* BOTTOM RIGHT: High-Octane Speedometer & Tachometer Cluster */}
-      <div className="flex justify-between items-end w-full">
+      {/* BOTTOM AREA: Speedometer placed cleanly above pedals, avoiding any overlap */}
+      <div className="flex justify-between items-end w-full mb-32 md:mb-36 pointer-events-none">
         {/* Standings Leaderboard preview on left */}
-        <div className="hidden lg:flex flex-col gap-1 bg-neutral-900/85 border border-neutral-700/80 p-2.5 rounded-xl text-xs font-chakra pointer-events-auto">
+        <div className="hidden lg:flex flex-col gap-1 bg-neutral-900/85 border border-neutral-700/80 p-2.5 rounded-xl text-xs font-chakra pointer-events-auto shadow-lg">
           <div className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider mb-0.5">STANDINGS</div>
           {standings.slice(0, 4).map((s) => (
             <div
@@ -300,12 +318,22 @@ export const HUD: React.FC<HUDProps> = ({
           ))}
         </div>
 
-        {/* Speedometer & Tachometer Gauge */}
-        <div className="flex items-end gap-3 ml-auto pointer-events-auto">
+        {/* Center: Drive instruction pill when stationary */}
+        {physicsState.speedKmh < 2 && (
+          <div className="mx-auto bg-neutral-950/90 border border-emerald-500/60 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 pointer-events-auto animate-pulse">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            <span className="text-xs md:text-sm font-chakra font-bold text-white">
+              Press <kbd className="bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded font-mono">[W]</kbd> / <kbd className="bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded font-mono">[↑]</kbd> or click the green <strong className="text-emerald-400">[DRIVE]</strong> pedal below to accelerate!
+            </span>
+          </div>
+        )}
+
+        {/* Speedometer & Tachometer Gauge (Lifted above pedals so pedals are 100% visible) */}
+        <div className="flex items-end gap-2.5 ml-auto pointer-events-auto">
           {/* Nitro gauge vertical tube */}
-          <div className="flex flex-col items-center bg-neutral-900/90 border border-neutral-700/80 px-2 py-2.5 rounded-2xl shadow-xl">
+          <div className="flex flex-col items-center bg-neutral-900/90 border border-neutral-700/80 px-2 py-2 rounded-2xl shadow-xl">
             <div className="text-[9px] font-chakra uppercase font-bold text-cyan-400 mb-1">NOS</div>
-            <div className="w-3.5 h-24 bg-neutral-950 rounded-full overflow-hidden flex flex-col justify-end p-0.5 border border-neutral-800">
+            <div className="w-3 h-20 bg-neutral-950 rounded-full overflow-hidden flex flex-col justify-end p-0.5 border border-neutral-800">
               <div
                 className={`w-full rounded-full transition-all duration-75 ${
                   physicsState.nitroPercent > 20
@@ -321,7 +349,7 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
 
           {/* Main Speed & Gear Dial */}
-          <div className="bg-neutral-900/90 border border-neutral-700/80 p-4 rounded-3xl shadow-2xl flex flex-col items-center min-w-[170px] relative overflow-hidden">
+          <div className="bg-neutral-900/90 border border-neutral-700/80 p-3 rounded-2xl shadow-2xl flex flex-col items-center min-w-[150px] relative overflow-hidden">
             {/* Redline Top Glow Bar */}
             <div
               className={`absolute top-0 left-0 right-0 h-1 transition-all ${
@@ -332,18 +360,18 @@ export const HUD: React.FC<HUDProps> = ({
             {/* Gear & RPM info */}
             <div className="flex items-center justify-between w-full mb-1">
               <div className="flex items-baseline gap-1">
-                <span className="text-[10px] font-chakra uppercase text-neutral-400">GEAR</span>
-                <span className="font-orbitron text-xl font-black text-amber-400">
+                <span className="text-[9px] font-chakra uppercase text-neutral-400">GEAR</span>
+                <span className="font-orbitron text-lg font-black text-amber-400">
                   {physicsState.speedKmh < 1 && physicsState.gear === 1 ? 'N' : physicsState.gear}
                 </span>
               </div>
-              <span className={`text-[10px] font-orbitron font-bold ${isRedline ? 'text-red-400' : 'text-neutral-400'}`}>
+              <span className={`text-[9px] font-orbitron font-bold ${isRedline ? 'text-red-400' : 'text-neutral-400'}`}>
                 {Math.round(physicsState.engineRpm)} RPM
               </span>
             </div>
 
             {/* Tachometer RPM Bar */}
-            <div className="w-full h-2 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800 mb-2">
+            <div className="w-full h-1.5 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800 mb-1.5">
               <div
                 className={`h-full transition-all duration-75 ${
                   isRedline
@@ -355,13 +383,13 @@ export const HUD: React.FC<HUDProps> = ({
             </div>
 
             {/* Big Digital Speed readout */}
-            <div className="flex items-baseline justify-center gap-1.5">
-              <span className="font-orbitron text-5xl md:text-6xl font-black text-white tracking-tighter">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="font-orbitron text-4xl md:text-5xl font-black text-white tracking-tighter">
                 {displaySpeed}
               </span>
               <button
                 onClick={onToggleSpeedUnit}
-                className="text-xs font-chakra font-bold text-neutral-400 hover:text-white uppercase transition-colors"
+                className="text-[11px] font-chakra font-bold text-neutral-400 hover:text-white uppercase transition-colors"
                 title="Click to toggle KMH / MPH"
               >
                 {speedUnit}
